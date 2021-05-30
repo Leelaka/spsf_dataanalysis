@@ -4,9 +4,9 @@ app = express();
 const req = require('request');
 const axios = require('axios');
 
-var port = process.env.PORT || 8081;   
-var spsfServiceUrl = 'https://spsfservice.us-south.cf.appdomain.cloud';
-//var spsfServiceUrl = 'http://localhost:8080';
+var port = process.env.PORT || 8000;   
+//var spsfServiceUrl = 'https://spsfservice.us-south.cf.appdomain.cloud';
+var spsfServiceUrl = 'http://localhost:8080';
 
 //depending on the application run on locally or live we change the app host url here
 var spsfServiceUrl = 'https://spsfservice.mybluemix.net';
@@ -23,10 +23,6 @@ app.use(express.static(__dirname +'/public'));
 //use express boady parser to get view data
 app.use(express.urlencoded({ extended: true }));
 
-var arrayData=[]; 
-var arrayOnstreetData=[];
-var arrayOffstreetData=[];
-var arrayOnstreetInfoData=[];
 var arrayObject;
 
 //convert json to an array
@@ -38,6 +34,49 @@ convertJsonToArray = function (json){
     });
     return arrayOutput;
 }
+
+//function to sort json object array by a given key value
+sortJsonObjectArrayByKey = function (array, key){
+    return array.sort(function(valA, valB) {
+    var x = valA[key]; var y = valB[key];
+    return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+   });
+  }
+
+calculateDistance = function (userLatitude, userLongitude, parkingLat, parkingLon) {
+    var userRadlLat = Math.PI * userLatitude/180;
+    var parkingRadlat = Math.PI * parkingLat/180;
+    var theta = userLongitude-parkingLon;
+    var radtheta = Math.PI * theta/180;
+    var dist = Math.sin(userRadlLat) * Math.sin(parkingRadlat) + Math.cos(userRadlLat) * Math.cos(parkingRadlat) * Math.cos(radtheta);
+    if (dist > 1) {
+        dist = 1;
+    }
+    dist = Math.acos(dist);
+    dist = dist * 180/Math.PI;
+    dist = dist * 60 * 1.1515;
+    dist = dist * 1.609344;
+    return dist
+  }
+
+//get the nearset parking spots array
+  getNearestParkingSpots = function (userLatitude,userLongitude,data){
+
+    let arrayParkingWithDistance= [];
+    let keys = Object.keys(data);
+    let dis=0;
+  
+    keys.forEach(function(key){
+      dis = calculateDistance( parseFloat(userLatitude),  parseFloat(userLongitude) , parseFloat(data[key].lat), parseFloat(data[key].lon))
+       let object = {distance:dis , type:data[key].type, bay:data[key].bay, rate:'Rate per Hour $4.00',lat:data[key].lat, lon:data[key].lon , desc1:data[key].desc1, desc2:data[key].desc2}
+       arrayParkingWithDistance.push(object);    
+    })
+  
+    arrayParkingWithDistance = sortJsonObjectArrayByKey(arrayParkingWithDistance, 'distance');
+    return arrayParkingWithDistance;
+  }
+
+
 
 //function to get onstreet parking data and relavant parking bay info data
 getOnstreetParkingData = async function(){
@@ -130,6 +169,8 @@ getOffstreetParkingData = async function(){
 app.get('/generateParkingData',function (request,response){
    
     let arrayAllParkingData = [];
+    let arraySortedByDistance = []; 
+    
    
     return getOnstreetParkingData().then((res) => {
 
@@ -141,7 +182,8 @@ app.get('/generateParkingData',function (request,response){
             res.forEach((element) => { 
                 arrayAllParkingData.push(element)
             }) 
-            response.send(arrayAllParkingData)
+            arraySortedByDistance = getNearestParkingSpots(request.query.userLatitude,request.query.userLongitude,arrayAllParkingData)
+            response.send(arraySortedByDistance.slice(0,10))
         })
     })  
  })

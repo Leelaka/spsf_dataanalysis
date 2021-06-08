@@ -4,8 +4,6 @@ app = express();
 const req = require('request');
 const axios = require('axios');
 
-var port = process.env.PORT || 8081;   
-
 //depending on the application run on locally or live we change the app host url here
 var spsfServiceUrl = 'https://spsfservice.mybluemix.net';
 //var spsfServiceUrl = 'http://localhost:8080';
@@ -20,7 +18,9 @@ var urlOffstreetParkingData = "https://data.melbourne.vic.gov.au/resource/krh5-h
 app.use(express.static(__dirname +'/public'));
 //use express boady parser to get view data
 app.use(express.urlencoded({ extended: true }));
+require('dotenv').config({path: __dirname + '/.env'})
 
+var port = process.env.PORT || 8081;   
 //function to convert json to an array
 convertJsonToArray = function (json){
     var arrayOutput = [];

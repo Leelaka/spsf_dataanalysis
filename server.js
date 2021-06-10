@@ -3,24 +3,24 @@ app = express();
 
 const req = require('request');
 const axios = require('axios');
+require('dotenv').config({path: __dirname + '/.env'})
 
 //depending on the application run on locally or live we change the app host url here
-var spsfServiceUrl = 'https://spsfservice.mybluemix.net';
-//var spsfServiceUrl = 'http://localhost:8080';
+var spsfServiceUrl = process.env.SERVICE_URL;
 
 //open data platform endpoint url for bay sensor data
-var urlOnstreetBaySensorData = "https://data.melbourne.vic.gov.au/resource/vh2v-4nfs.json";
+var urlOnstreetBaySensorData = process.env.ONSTREET_SENSORS_DATA_URL;
 //open data platform endpoint url for bay info data
-var urlOnstreetBayInfoData = "https://data.melbourne.vic.gov.au/resource/ntht-5rk7.json";
+var urlOnstreetBayInfoData = process.env.ONSTREET_INFO_DATA_URL;
 //open data platform endpoint url for off street parking data
-var urlOffstreetParkingData = "https://data.melbourne.vic.gov.au/resource/krh5-hhjn.json";
+var urlOffstreetParkingData = process.env.OFFSTREET_DATA_URL;
 
 app.use(express.static(__dirname +'/public'));
 //use express boady parser to get view data
 app.use(express.urlencoded({ extended: true }));
-require('dotenv').config({path: __dirname + '/.env'})
 
-var port = process.env.PORT || 8081;   
+
+var port = process.env.RUNNING_PORT || 8081;   
 //function to convert json to an array
 convertJsonToArray = function (json){
     var arrayOutput = [];

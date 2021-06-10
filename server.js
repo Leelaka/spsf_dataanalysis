@@ -20,7 +20,7 @@ app.use(express.static(__dirname +'/public'));
 app.use(express.urlencoded({ extended: true }));
 
 
-var port = process.env.RUNNING_PORT || 8081;   
+var port = process.env.PORT || 8081;   
 //function to convert json to an array
 convertJsonToArray = function (json){
     var arrayOutput = [];
